@@ -1,0 +1,15 @@
+{
+  "name": "custom-events-starter-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev-utm": "vite --open \"/?utm_campaign=best-campaign-ever&utm_medium=best-medium-ever&utm_source=best-source-ever\"",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.2"
+  }
+}
