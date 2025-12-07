@@ -7,12 +7,15 @@ class EventsService {
       sections = defaultSections,
       loadEventName = "default_load_event",
       ctaClickName = "default_cta_click_event",
-      ctaSelector = "[data-cta='true']",
+      ctaSelector = "[data-cta]",
       ...rest
     } = config;
 
     this.baseUrl = baseUrl;
-    this.sections = sections || defaultSections;
+    const resolvedSections =
+      Array.isArray(sections) && sections.length ? sections : defaultSections;
+    this.sections = resolvedSections;
+    this.sectionSet = new Set(resolvedSections);
     this.loadEventName = loadEventName;
     this.ctaClickName = ctaClickName;
     this.ctaSelector = ctaSelector;
@@ -72,9 +75,13 @@ class EventsService {
       const target = event.target?.closest(this.ctaSelector);
       if (!target) return;
 
+      const section = this.#resolveSection(target);
+      if (!section) return;
+
       const payload = {
-        section: this.#resolveSection(target),
+        section,
         cta_text: (target.textContent || "").trim(),
+        "event-position": section,
       };
 
       this.registerClickEvent(payload);
@@ -82,27 +89,35 @@ class EventsService {
   }
 
   #resolveSection(node) {
-    if (!node) return this.sections?.[0] || "";
+    if (!node || !this.sectionSet?.size) return null;
 
-    const explicit = node.dataset?.position || node.getAttribute("data-position");
-    if (explicit) return explicit;
+    let current = node;
+    while (current && current !== document) {
+      if (typeof current.getAttribute === "function") {
+        const position = current.getAttribute("data-position");
+        if (position && this.sectionSet.has(position)) {
+          return position;
+        }
+      }
 
-    const container = node.closest("[data-position]");
-    if (container) {
-      return container.dataset?.position || container.getAttribute("data-position") || "";
+      current = current.parentElement || current.parentNode;
     }
 
-    return this.sections?.[0] || "";
+    return null;
   }
 
   async #sendAnalytic(name, extra = {}, baseUrl = this.baseUrl) {
     try {
       const params = new URLSearchParams();
+      const combinedExtra = {
+        ...this.getUtmParams(),
+        ...extra,
+      };
       params.append("Name", name);
       params.append("Value", "0");
-      params.append("Extra", JSON.stringify(extra));
+      params.append("Extra", JSON.stringify(combinedExtra));
       const url = `${baseUrl}?${params.toString()}`;
-      console.log("BI event:", name, extra);
+      console.log("BI event:", name, combinedExtra);
       const xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
       xhr.send();
@@ -114,7 +129,7 @@ class EventsService {
 
 const eventsService = new EventsService({
   baseUrl: "base2",
-  sections: ["asd", "sdf"],
+  // sections: ["asd", "sdf"],
   loadEventName: "custom_load_event A1",
   ctaClickName: "custom_cta_event A1",
 });
