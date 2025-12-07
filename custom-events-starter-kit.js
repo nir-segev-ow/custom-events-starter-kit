@@ -18,12 +18,32 @@ const sendAnalytic = async (name, extra = {}, path = "https://analyticsnew.overw
     } catch { }
 };
 
+const getParamValue = (params, key) => {
+    if (!params) return "";
+    if (params.has(key)) {
+        return (params.get(key) || "").trim();
+    }
+    const lowerKey = key.toLowerCase();
+    for (const [paramKey, value] of params.entries()) {
+        if (paramKey.toLowerCase() === lowerKey) {
+            return (value || "").trim();
+        }
+    }
+    return "";
+};
+
 const getUtmParams = () => {
-    const params = new URLSearchParams(window.location.search);
+    if (typeof window === "undefined") {
+        return { campaign: "", medium: "", source: "" };
+    }
+    const searchParams = new URLSearchParams(window.location.search || "");
+    const hashValue = window.location.hash ? window.location.hash.replace(/^#/, "") : "";
+    const hashParams = hashValue ? new URLSearchParams(hashValue) : null;
+    const readValue = (name) => getParamValue(searchParams, name) || getParamValue(hashParams, name) || "";
     return {
-        campaign: params.get("utm_campaign") || "",
-        medium: params.get("utm_medium") || "",
-        source: params.get("utm_source") || "",
+        campaign: readValue("utm_campaign"),
+        medium: readValue("utm_medium"),
+        source: readValue("utm_source"),
     };
 }
 
@@ -36,13 +56,13 @@ const getReferrer = () => {
     }
 };
 
-const CTA_POSITIONS = Object.freeze({
-    ["HEADER"]: "Primary hero CTA located in the page header",
-    ["TOP"]: "Section-level CTA near the top fold of the content",
-    ["MIDDLE"]: "Interactive CTA positioned alongside the sandbox controls",
-    ["DOWNLOAD-BUTTON"]: "Inline download CTA used across experiences",
-    ["DOWNLOAD-BUTTON-MODAL"]: "Modal-based download CTA for gated flows",
-});
+const CTA_POSITIONS = Object.freeze([
+    "HEADER",
+    "TOP",
+    "MIDDLE",
+    "DOWNLOAD-BUTTON",
+    "DOWNLOAD-BUTTON-MODAL",
+]);
 
 const POSITION_ATTRIBUTE = "data-position";
 const PAGE_VIEW_EVENT = "page_view_event";
@@ -71,6 +91,20 @@ const runtimeConfig = {
     launcherSourceFallback: DEFAULT_LAUNCHER_SOURCE,
 };
 
+const isAllowedPositionValue = (value) => {
+    const normalizedValue = (value || "").toUpperCase();
+    if (!normalizedValue) return false;
+    const configuredPositions = runtimeConfig.positions || CTA_POSITIONS;
+    const matches = (input) => (input || "").toUpperCase() === normalizedValue;
+    if (Array.isArray(configuredPositions)) {
+        return configuredPositions.some(matches);
+    }
+    if (configuredPositions && typeof configuredPositions === "object") {
+        return Object.keys(configuredPositions).some(matches);
+    }
+    return false;
+};
+
 let delegatedListenerBound = false;
 let delegatedHandler = null;
 const actionClickHandlers = new WeakMap();
@@ -80,9 +114,7 @@ const normalizePosition = (element) => {
     const attribute = runtimeConfig.positionAttribute || POSITION_ATTRIBUTE;
     const host = element.closest(`[${attribute}]`);
     const value = host?.getAttribute(attribute) || "";
-    const key = value?.toUpperCase();
-    const positionsMap = runtimeConfig.positions || CTA_POSITIONS;
-    if (key && positionsMap[key]) {
+    if (isAllowedPositionValue(value)) {
         return value;
     }
     return "";
@@ -155,12 +187,10 @@ const buildInstallerUrl = () => {
         PartnerId: partnerId,
         ExtensionId: extensionId,
     });
-    if (runtimeConfig.installerUtmTerm) {
-        params.append("utm_term", runtimeConfig.installerUtmTerm);
-    }
-    if (runtimeConfig.installerUtmContent) {
-        params.append("utm_content", runtimeConfig.installerUtmContent);
-    }
+    const utmTerm = typeof runtimeConfig.installerUtmTerm === "string" ? runtimeConfig.installerUtmTerm : "";
+    const utmContent = typeof runtimeConfig.installerUtmContent === "string" ? runtimeConfig.installerUtmContent : "";
+    params.append("utm_term", utmTerm);
+    params.append("utm_content", utmContent);
     return `${baseUrl}?${params.toString()}`;
 };
 

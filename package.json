@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev-utm": "vite --open \"/?utm_campaign=best-campaign-ever&utm_medium=best-medium-ever&utm_source=best-source-ever\"",
+    "dev": "vite --open \"/index.html\"",
+    "dev-utm": "vite --open \"/index.html?utm_campaign=nir&utm_medium=king&utm_source=5000\"",
+    "example-1": "vite --open \"/outplayed-blackfriday-sale/index.html\"",
+    "example-1-utm": "vite --open \"/outplayed-blackfriday-sale/index.html?utm_campaign=nir&utm_medium=king&utm_source=5000\"",
     "build": "vite build",
     "preview": "vite preview"
   },
