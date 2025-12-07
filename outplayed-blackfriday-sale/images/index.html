@@ -486,7 +486,12 @@
 
   <!-- pass query params to installer when a user downloads the .exe file -->
   <script src="https://content.overwolf.com/dct/dct.js"></script>
-  <script src="../multi-instance-custom-events.js"></script>
+  <script>
+    window.customEventsStarterKitConfig = {
+      installerPartnerId: "4523",
+    };
+  </script>
+  <script type="module" src="/multi-instance-custom-events.js"></script>
 
 </body>
 
