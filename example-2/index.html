@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Events Example 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <header class="surface surface-dark" data-position="header">
+    <div class="shell">
+      <div class="brand">
+        <span class="eyebrow">Outplayed</span>
+        <h1>Action Hub</h1>
+      </div>
+      <nav class="cta-row">
+        <a class="btn btn-primary" data-cta="true" data-launcher role="button">Launch Outplayed</a>
+        <a class="btn btn-secondary" data-cta="true" data-installer role="button">Download Installer</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="surface surface-hero" data-position="top">
+      <div class="shell hero-shell">
+        <p class="kicker">Live Events · Personalized Uptake</p>
+        <h2>Connect campaigns with every click</h2>
+        <p class="lede">
+          Use these buttons to simulate launcher and installer behavior. Each call to action inherits
+          live UTM parameters and resolves the correct section for analytics.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" data-cta="true" data-launcher role="button">Launch Experience</a>
+          <a class="btn btn-ghost" data-cta="true" data-position="middle" role="button">Track Generic CTA</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="split surface surface-warm">
+      <article class="split-main" data-position="middle">
+        <h3>Installer funnel</h3>
+        <p>
+          This link demonstrates a download CTA that includes partner, extension, and all available
+          UTM parameters before redirecting.
+        </p>
+        <a class="btn btn-primary" data-cta="true" data-installer role="button">Download for Windows</a>
+      </article>
+      <aside class="split-aside surface surface-dark" data-position="download-button">
+        <h4>Quick launchers</h4>
+        <p>Each item below updates its href when clicked.</p>
+        <ul>
+          <li><a data-cta="true" data-launcher role="button">Open Promotions</a></li>
+          <li><a data-cta="true" data-launcher role="button">Launch Clips</a></li>
+          <li><a data-cta="true" data-installer role="button">Install Beta Build</a></li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="surface surface-dark" data-position="download-button-modal">
+    <div class="shell footer-shell">
+      <p>Need help? <a data-cta="true" role="button">Contact us</a></p>
+      <small>© <span id="year"></span> Outplayed • Analytics demo experience</small>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+  <script src="../multi-instance-custom-events.js"></script>
+</body>
+
+</html>

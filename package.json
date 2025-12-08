@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --open \"/index.html\"",
-    "dev-utm": "vite --open \"/index.html?utm_campaign=nir&utm_medium=king&utm_source=5000\"",
     "example-1": "vite --open \"/outplayed-blackfriday-sale/index.html\"",
     "example-1-utm": "vite --open \"/outplayed-blackfriday-sale/index.html?utm_campaign=nir&utm_medium=king&utm_source=5000\"",
+    "example-2": "vite --open \"/example-2/index.html\"",
+    "example-2-utm": "vite --open \"/example-2/index.html?utm_campaign=demo&utm_medium=cta&utm_source=landingpage_email&utm_term=term&utm_content=content\"",
     "build": "vite build",
     "preview": "vite preview"
   },
