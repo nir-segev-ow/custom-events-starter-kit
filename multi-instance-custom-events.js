@@ -218,16 +218,8 @@ class EventsService {
   }
 }
 
-const eventsService = new EventsService({
-  baseUrl: "https://analyticsnew.overwolf.com/analytics/Counter",
-  sections: ["header", "top", "middle", "download-button", "download-button-modal"],
-  loadEventName: "custom_load_event A1",
-  ctaClickName: "custom_cta_event A1",
-  ctaSelector: "[data-cta]",
-  launcherPath: "outplayed-app://promotions-window?source=landing-page",
-  installerPath: "https://download.overwolf.com/install/Download",
-  extensionId: "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
-  partnerId: "4523",
-});
-
-eventsService.init();
+if (typeof window !== "undefined") {
+  window.EventsService = EventsService;
+} else if (typeof globalThis !== "undefined") {
+  globalThis.EventsService = EventsService;
+}

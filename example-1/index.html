@@ -13,7 +13,7 @@
   <meta property="og:description"
     content="Get Outplayed Premium SE for $4.99/month this Black Friday. Unlimited video hosting, ad-free recording, watermark control, custom layouts, and a price locked forever.">
 
-  <meta property="og:image" content="https://game.overwolf.com/outplayed-blackfriday-sale/social.png">
+  <meta property="og:image" content="https://game.overwolf.com/example-1/social.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/png">
@@ -54,7 +54,7 @@
         <nav class="header-buttons hero-buttons download-buttons">
           <ul class="header-menu">
             <li>
-              <a href="https://game.overwolf.com/outplayed-blackfriday-sale/terms-and-conditions" target="_self"
+              <a href="https://game.overwolf.com/example-1/terms-and-conditions" target="_self"
                 class="header-link">
                 Terms & Conditions
               </a>
@@ -442,7 +442,7 @@
         </svg>
         Join our Discord!
       </a> |
-      <a href="https://game.overwolf.com/outplayed-blackfriday-sale/terms-and-conditions" target="_self">
+      <a href="https://game.overwolf.com/example-1/terms-and-conditions" target="_self">
         Terms & Conditions Apply
       </a>
     </div>
@@ -487,6 +487,23 @@
   <!-- pass query params to installer when a user downloads the .exe file -->
   <script src="https://content.overwolf.com/dct/dct.js"></script>
   <script src="../multi-instance-custom-events.js"></script>
+  <script>
+    (function initEvents() {
+      if (!window || !window.EventsService) return;
+      const service = new window.EventsService({
+        baseUrl: "https://analyticsnew.overwolf.com/analytics/Counter",
+        sections: ["header", "top", "middle", "download-button", "download-button-modal"],
+        loadEventName: "custom_load_event A1",
+        ctaClickName: "custom_cta_event A1",
+        ctaSelector: "[data-cta]",
+        launcherPath: "outplayed-app://promotions-window?source=landing-page",
+        installerPath: "https://download.overwolf.com/install/Download",
+        extensionId: "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
+        partnerId: "4523",
+      });
+      service.init();
+    })();
+  </script>
 
 </body>
 
