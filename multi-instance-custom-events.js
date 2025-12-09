@@ -12,6 +12,9 @@ class EventsService {
       installerPath = "https://download.overwolf.com/install/Download",
       extensionId = "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
       partnerId = "4523",
+      launcherSelector = "[data-launcher]",
+      installerSelector = "[data-installer]",
+      trackLoadEvent = true,
       ...rest
     } = config;
 
@@ -28,6 +31,9 @@ class EventsService {
     this.installerPath = installerPath;
     this.extensionId = extensionId;
     this.partnerId = partnerId;
+    this.launcherSelector = launcherSelector;
+    this.installerSelector = installerSelector;
+    this.trackLoadEvent = trackLoadEvent !== false;
     this.extraConfig = rest;
     this.initialized = false;
   }
@@ -36,9 +42,17 @@ class EventsService {
     if (this.initialized) return;
     this.initialized = true;
 
-    this.#setupLoadHandler();
+    if (this.trackLoadEvent) {
+      this.#setupLoadHandler();
+    }
     this.#setupClickHandlers();
     this.#setupLauncherHandlers();
+    this.preserveQueryParams();
+  }
+
+  preserveQueryParams(root = document) {
+    if (typeof document === "undefined") return;
+    this.#applyPreserveHandlers(root);
   }
 
   registerLoadEvent(extra = this.getUtmParams()) {
@@ -58,11 +72,6 @@ class EventsService {
       term: params.get("utm_term") || "",
       content: params.get("utm_content") || "",
     };
-  }
-
-  logStuff() {
-    console.log(this.baseUrl);
-    console.log(this.sections);
   }
 
   #setupLoadHandler() {
@@ -102,17 +111,24 @@ class EventsService {
 
   #setupLauncherHandlers() {
     document.addEventListener("click", (event) => {
-      const launcherTarget = event.target?.closest("[data-launcher]");
-      if (launcherTarget) {
-        const href = this.#buildLauncherHref();
-        if (href) launcherTarget.setAttribute("href", href);
-        return;
+      const launcherSelector = this.launcherSelector || "[data-launcher]";
+      const installerSelector = this.installerSelector || "[data-installer]";
+
+      if (launcherSelector) {
+        const launcherTarget = event.target?.closest(launcherSelector);
+        if (launcherTarget) {
+          const href = this.#buildLauncherHref();
+          if (href) launcherTarget.setAttribute("href", href);
+          return;
+        }
       }
 
-      const installerTarget = event.target?.closest("[data-installer]");
-      if (installerTarget) {
-        const href = this.#buildInstallerHref();
-        if (href) installerTarget.setAttribute("href", href);
+      if (installerSelector) {
+        const installerTarget = event.target?.closest(installerSelector);
+        if (installerTarget) {
+          const href = this.#buildInstallerHref();
+          if (href) installerTarget.setAttribute("href", href);
+        }
       }
     });
   }
@@ -195,6 +211,58 @@ class EventsService {
     }
 
     return null;
+  }
+
+  #applyPreserveHandlers(root = document) {
+    if (typeof document === "undefined" || !root) return;
+    const scope = root.querySelectorAll ? root : document;
+    scope.querySelectorAll("[data-preserve]").forEach((node) => {
+      if (!node || node.dataset?.preserveReady === "true") return;
+      const target =
+        node.getAttribute("href") || node.getAttribute("data-href") || node.getAttribute("data-url");
+      if (!target) return;
+
+      const url = this.#buildPreservedUrl(target);
+      if (!url) return;
+
+      const finalHref = `${url.pathname}${url.search}${url.hash}`;
+      const absoluteHref = url.toString();
+      if (node.tagName?.toLowerCase() === "a") {
+        node.setAttribute("href", finalHref);
+        node.dataset.preserveReady = "true";
+        return;
+      }
+
+      node.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          const targetAttr = node.getAttribute("target") || "_self";
+          if (targetAttr === "_blank") {
+            window.open(absoluteHref, "_blank", "noopener");
+          } else {
+            window.location.assign(absoluteHref);
+          }
+        },
+        { once: false }
+      );
+      node.dataset.preserveReady = "true";
+    });
+  }
+
+  #buildPreservedUrl(rawValue) {
+    if (typeof window === "undefined" || !rawValue) return null;
+    try {
+      const resolved = new URL(rawValue, window.location.href);
+      const merged = new URLSearchParams(window.location.search || "");
+      const targetParams = new URLSearchParams(resolved.search || "");
+      targetParams.forEach((value, key) => merged.set(key, value));
+      resolved.search = merged.toString() ? `?${merged.toString()}` : "";
+      return resolved;
+    } catch (err) {
+      console.warn("Failed to build preserved URL", err);
+      return null;
+    }
   }
 
   async #sendAnalytic(name, extra = {}, baseUrl = this.baseUrl) {
