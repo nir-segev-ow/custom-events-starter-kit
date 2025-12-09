@@ -69,10 +69,25 @@
     </div>
   </footer>
 
+  <script src="../multi-instance-custom-events.js"></script>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+    (function initEvents() {
+      if (!window || !window.EventsService) return;
+      const service = new window.EventsService({
+        baseUrl: "https://analyticsnew.overwolf.com/analytics/Counter",
+        sections: ["header", "top", "middle", "download-button", "download-button-modal"],
+        loadEventName: "custom_load_event A1",
+        ctaClickName: "custom_cta_event A1",
+        ctaSelector: "[data-cta]",
+        launcherPath: "outplayed-app://promotions-window?source=landing-page",
+        installerPath: "https://download.overwolf.com/install/Download",
+        extensionId: "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
+        partnerId: "4523",
+      });
+      service.init();
+    })();
   </script>
-  <script src="../multi-instance-custom-events.js"></script>
 </body>
 
 </html>

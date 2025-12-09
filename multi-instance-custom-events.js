@@ -12,6 +12,9 @@ class EventsService {
       installerPath = "https://download.overwolf.com/install/Download",
       extensionId = "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
       partnerId = "4523",
+      launcherSelector = "[data-launcher]",
+      installerSelector = "[data-installer]",
+      trackLoadEvent = true,
       ...rest
     } = config;
 
@@ -28,6 +31,9 @@ class EventsService {
     this.installerPath = installerPath;
     this.extensionId = extensionId;
     this.partnerId = partnerId;
+    this.launcherSelector = launcherSelector;
+    this.installerSelector = installerSelector;
+    this.trackLoadEvent = trackLoadEvent !== false;
     this.extraConfig = rest;
     this.initialized = false;
   }
@@ -36,7 +42,9 @@ class EventsService {
     if (this.initialized) return;
     this.initialized = true;
 
-    this.#setupLoadHandler();
+    if (this.trackLoadEvent) {
+      this.#setupLoadHandler();
+    }
     this.#setupClickHandlers();
     this.#setupLauncherHandlers();
   }
@@ -58,11 +66,6 @@ class EventsService {
       term: params.get("utm_term") || "",
       content: params.get("utm_content") || "",
     };
-  }
-
-  logStuff() {
-    console.log(this.baseUrl);
-    console.log(this.sections);
   }
 
   #setupLoadHandler() {
@@ -102,17 +105,24 @@ class EventsService {
 
   #setupLauncherHandlers() {
     document.addEventListener("click", (event) => {
-      const launcherTarget = event.target?.closest("[data-launcher]");
-      if (launcherTarget) {
-        const href = this.#buildLauncherHref();
-        if (href) launcherTarget.setAttribute("href", href);
-        return;
+      const launcherSelector = this.launcherSelector || "[data-launcher]";
+      const installerSelector = this.installerSelector || "[data-installer]";
+
+      if (launcherSelector) {
+        const launcherTarget = event.target?.closest(launcherSelector);
+        if (launcherTarget) {
+          const href = this.#buildLauncherHref();
+          if (href) launcherTarget.setAttribute("href", href);
+          return;
+        }
       }
 
-      const installerTarget = event.target?.closest("[data-installer]");
-      if (installerTarget) {
-        const href = this.#buildInstallerHref();
-        if (href) installerTarget.setAttribute("href", href);
+      if (installerSelector) {
+        const installerTarget = event.target?.closest(installerSelector);
+        if (installerTarget) {
+          const href = this.#buildInstallerHref();
+          if (href) installerTarget.setAttribute("href", href);
+        }
       }
     });
   }
@@ -218,16 +228,8 @@ class EventsService {
   }
 }
 
-const eventsService = new EventsService({
-  baseUrl: "https://analyticsnew.overwolf.com/analytics/Counter",
-  sections: ["header", "top", "middle", "download-button", "download-button-modal"],
-  loadEventName: "custom_load_event A1",
-  ctaClickName: "custom_cta_event A1",
-  ctaSelector: "[data-cta]",
-  launcherPath: "outplayed-app://promotions-window?source=landing-page",
-  installerPath: "https://download.overwolf.com/install/Download",
-  extensionId: "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
-  partnerId: "4523",
-});
-
-eventsService.init();
+if (typeof window !== "undefined") {
+  window.EventsService = EventsService;
+} else if (typeof globalThis !== "undefined") {
+  globalThis.EventsService = EventsService;
+}

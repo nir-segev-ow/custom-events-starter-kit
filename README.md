@@ -1,114 +1,68 @@
-# Custom Events Starter Kit - Integration Notes
+# Custom Events Starter Kit
 
-These notes are intended for developers embedding the evolving `custom-events-starter-kit.js` helper on lightweight minisites. The script handles analytics dispatching, so your main tasks are adding the script tag, wiring optional configuration, and annotating markup with the expected data attributes.
+This repo shows how to wire a lightweight analytics helper into static landing pages while keeping CTA logic flexible and UTM-aware.
 
-> NOTE: The kit is still under active development. Refresh this document whenever you pull new updates.
+## Project Layout
+- `example-1/` – Full Outplayed campaign page showcasing the integration in a production-like layout.
+- `example-2/` – Minimal “action hub” surface that highlights every CTA permutation (launcher, installer, generic buttons).
+- `example-3/` – Lunar reward experience demonstrating multi-instance configuration (different partner IDs and CTAs).
+- `example-2/style.css` – Color-blocked layout styles for the second example.
+- `multi-instance-custom-events.js` – The reusable `EventsService` class that powers load + click tracking and launcher/installer URL generation.
 
-## 1. Add the shared script
+## Usage
+1. **Install deps** – `npm install`
+2. **Run demos**
+   - `npm run example-1` – opens the main experience.
+   - `npm run example-1-utm` – same page preloaded with sample UTM params.
+   - `npm run example-2` / `example-2-utm` – minimal surface for quick testing.
+3. **Include the service**
+   ```html
+   <script src="../multi-instance-custom-events.js"></script>
+   <script>
+     const events = new window.EventsService({
+       baseUrl: "https://analytics.overwolf.com/analytics/Counter",
+       sections: ["header", "top", "middle", "download-button", "download-button-modal"],
+       loadEventName: "custom_load_event",
+       ctaClickName: "custom_cta_event",
+       launcherPath: "outplayed-app://promotions-window?source=landing-page",
+       installerPath: "https://download.overwolf.com/install/Download",
+       extensionId: "cghphpbjeabdkomiphingnegihoigeggcfphdofo",
+       partnerId: "4523",
+     });
+     events.init();
+   </script>
+   ```
+   **Config hints**
+   - `baseUrl` *(default: analytics counter endpoint)* – override per environment if needed.
+   - `sections` *(default list of common slots)* – defines the allowed `data-position` values; each `[data-cta]` click walks up the DOM to find the closest ancestor whose `data-position` appears in this list. Defaults cover typical hero/footer placements but you can configure per campaign.
+   - `loadEventName`, `ctaClickName`, `ctaSelector` *(defaults provided)* – update to match your BI taxonomy.
+   - `launcherPath` *(default `outplayed-app://promotions-window?source=landing-page`)* – include your preferred fallback `source`.
+   - `installerPath` *(default OW download URL)* – point to the correct installer if you host elsewhere.
+   - `extensionId`, `partnerId` *(required for tracking)* – defaults are placeholders; marketing should set real values per campaign.
+   - `launcherSelector`, `installerSelector` *(defaults `[data-launcher]` / `[data-installer]`)* – narrow delegated link handling when multiple instances share the page.
+   - `trackLoadEvent` *(default `true`)* – set to `false` for secondary instances when you only need CTA/link logic without sending another load BI.
 
-```html
-<script>
-  window.customEventsStarterKitConfig = {
-    pageViewEvent: "page_view_event",
-    ctaClickEvent: "cta_click_event",
-    ctaAttribute: "data-cta",
-    positionAttribute: "data-position",
-    positions: [
-      "HEADER",
-      "TOP",
-      "MIDDLE",
-      "DOWNLOAD-BUTTON",
-      "DOWNLOAD-BUTTON-MODAL",
-    ],
-    analyticsPath: "https://analyticsnew.overwolf.com/analytics/Counter",
-    installerPartnerId: "4523",
-    installerBaseUrl: "https://download.overwolf.com/install/Download",
-    installerUtmTerm: "",
-    installerUtmContent: "",
-    launcherBaseUrl: "outplayed-app://promotions-window",
-    launcherSourceFallback: "landing-page",
-  };
-</script>
-<script type="module" src="/custom-events-starter-kit.js"></script>
-```
+   You can run multiple instances side-by-side (see `example-3/`) by scoping each one with distinct `ctaSelector` / launcher / installer selectors and disabling the load event on secondary trackers.
 
-Define `window.customEventsStarterKitConfig` before the script so the automatic page-load event uses your overrides. Changing the values afterward would be too late because the kit dispatches the page view on `window.load`.
-You can omit any fields you do not need; defaults kick in automatically.
-Set `positions` to an array of uppercase strings that represent the allowed placement names (legacy object syntax is still accepted, but only the keys are used).
+   Every `[data-cta]` element uses event delegation: when clicked, the script finds its closest ancestor with a `data-position` attribute that matches one of the `sections` values. That match becomes both the reported section and the `event-position` value, ensuring consistent attribution even when CTAs are injected dynamically.
 
-## 2. Annotate CTA elements
+### Marking CTAs and Sections
+To leverage the service:
+- Add `data-cta` to every clickable element you want to track (`a`, `button`, etc.). Non-marked clicks are ignored.
+- Wrap CTAs in containers that include `data-position="section-id"`; choose ids from the `sections` array you pass to the constructor. Example:
+  ```html
+  <section class="hero" data-position="top">
+    <a class="btn" data-cta role="button" data-launcher>Launch Now</a>
+  </section>
+  ```
+- Keep using `data-launcher` or `data-installer` to trigger dynamic href generation with current UTM parameters.
+- CTAs without a matching ancestor fall back to the default section, so ensure every intentional placement defines `data-position`.
 
-Every clickable call-to-action you want tracked must carry the `data-cta` attribute (or the custom attribute you set via `ctaAttribute`).
+## Key Features
+- **Simplified tracking** – one class handles the load event plus delegated CTA clicks without sprinkling handlers across the DOM.
+- **CTA analytics** – only elements with `data-cta` trigger clicks, and the service auto-detects the closest `data-position` section for accurate attribution.
+- **Customizable events** – override event names, section lists, selectors, base URLs, launcher/installer paths, partner IDs, and extension IDs per instance.
+- **Event delegation & UTM capture** – delegated listeners allow dynamic DOM updates while always reading the latest `utm_*` params before firing analytics or building launcher/installer URLs.
+- **Launcher & installer helpers** – `[data-launcher]` elements get smart `outplayed-app://…?source=` links, while `[data-installer]` buttons embed UTM, partner, and extension values automatically.
 
-```html
-<button class="primary" data-cta>Download</button>
-<a href="#pricing" data-cta>See Pricing</a>
-```
-
-Because the listener uses event delegation, new CTAs added later will be tracked automatically as long as they include `data-cta`.
-
-## 3. Provide a `data-position`
-
-Each CTA needs to be associated with one of the approved positions so analytics payloads include the placement context. Add a `data-position="<value>"` to the nearest ancestor that represents the CTA's location. Current allowed values (configurable via `customEventsStarterKitConfig.positions`; keep each entry uppercase):
-
-- `HEADER`
-- `TOP`
-- `MIDDLE`
-- `DOWNLOAD-BUTTON`
-- `DOWNLOAD-BUTTON-MODAL`
-
-Example:
-
-```html
-<section class="hero" data-position="HEADER">
-  <button data-cta>Hero CTA</button>
-</section>
-```
-
-If a CTA has no ancestor with a valid `data-position`, the analytics event will omit `button-position`, so make sure every placement is annotated.
-
-## 4. Installer CTAs (`data-installer`)
-
-Add `data-installer` to any link or button that should open the Overwolf installer. The helper script builds the final URL automatically:
-
-```
-https://download.overwolf.com/install/Download?PartnerId=<yourId>&ExtensionId=cghphpbjeabdkomiphingnegihoigeggcfphdofo&...
-```
-
-Guidelines:
-
-- Set `installerPartnerId` in the config. This value is required for URL generation.
-- `ExtensionId` is the shared constant above. Override it with `installerExtensionId` only if you have a special case.
-- The script always appends `utm_term` and `utm_content`; the values come from `installerUtmTerm` and `installerUtmContent` (defaulting to empty strings when not provided).
-- Non-anchor elements receive a click handler that navigates to the installer URL, so buttons work out of the box.
-
-Example:
-
-```html
-<a class="primary" data-cta data-installer>Install Outplayed</a>
-```
-
-## 5. Launcher CTAs (`data-launcher`)
-
-Add `data-launcher` to deeplink into the Outplayed launcher. By default the base URL is `outplayed-app://promotions-window`, but you can override it with `launcherBaseUrl`.
-
-- The helper appends a `source` query parameter. If your base URL already has query parameters, it uses `&source=...`; otherwise it uses `?source=...`.
-- The `source` value comes from `utm_source`. When that is missing, the script falls back to `launcherSourceFallback` (`landing-page` by default).
-
-Example:
-
-```html
-<button class="secondary" data-cta data-launcher>Open Launcher</button>
-```
-
-## 6. Confirm UTM passthrough (optional)
-
-The kit automatically reads `utm_campaign`, `utm_medium`, and `utm_source` from the page URL, so no work is needed unless you manipulate the address bar elsewhere. Ensure you do not strip these parameters before the shared script initializes.
-
-## 7. Download/modal scenario
-
-For flows involving download buttons or modal CTAs, keep using the same `data-cta` and `data-position` rules. For modals, set `data-position="DOWNLOAD-BUTTON-MODAL"` on the modal container so clicks on enclosed buttons inherit the correct placement.
-
----
-
-That is it for now. As the starter kit evolves, expect additional attributes or helper hooks. Save your work so you can reapply updates easily when new guidance arrives.
+Use these examples as a reference for plugging `EventsService` into new landing pages or campaigns that need consistent BI coverage with minimal code changes.
