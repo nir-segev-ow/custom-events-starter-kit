@@ -47,6 +47,12 @@ class EventsService {
     }
     this.#setupClickHandlers();
     this.#setupLauncherHandlers();
+    this.preserveQueryParams();
+  }
+
+  preserveQueryParams(root = document) {
+    if (typeof document === "undefined") return;
+    this.#applyPreserveHandlers(root);
   }
 
   registerLoadEvent(extra = this.getUtmParams()) {
@@ -205,6 +211,58 @@ class EventsService {
     }
 
     return null;
+  }
+
+  #applyPreserveHandlers(root = document) {
+    if (typeof document === "undefined" || !root) return;
+    const scope = root.querySelectorAll ? root : document;
+    scope.querySelectorAll("[data-preserve]").forEach((node) => {
+      if (!node || node.dataset?.preserveReady === "true") return;
+      const target =
+        node.getAttribute("href") || node.getAttribute("data-href") || node.getAttribute("data-url");
+      if (!target) return;
+
+      const url = this.#buildPreservedUrl(target);
+      if (!url) return;
+
+      const finalHref = `${url.pathname}${url.search}${url.hash}`;
+      const absoluteHref = url.toString();
+      if (node.tagName?.toLowerCase() === "a") {
+        node.setAttribute("href", finalHref);
+        node.dataset.preserveReady = "true";
+        return;
+      }
+
+      node.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+          const targetAttr = node.getAttribute("target") || "_self";
+          if (targetAttr === "_blank") {
+            window.open(absoluteHref, "_blank", "noopener");
+          } else {
+            window.location.assign(absoluteHref);
+          }
+        },
+        { once: false }
+      );
+      node.dataset.preserveReady = "true";
+    });
+  }
+
+  #buildPreservedUrl(rawValue) {
+    if (typeof window === "undefined" || !rawValue) return null;
+    try {
+      const resolved = new URL(rawValue, window.location.href);
+      const merged = new URLSearchParams(window.location.search || "");
+      const targetParams = new URLSearchParams(resolved.search || "");
+      targetParams.forEach((value, key) => merged.set(key, value));
+      resolved.search = merged.toString() ? `?${merged.toString()}` : "";
+      return resolved;
+    } catch (err) {
+      console.warn("Failed to build preserved URL", err);
+      return null;
+    }
   }
 
   async #sendAnalytic(name, extra = {}, baseUrl = this.baseUrl) {

@@ -372,6 +372,55 @@ section {
   color: #fff;
 }
 
+.page-2-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 20px;
+  margin-left: auto;
+  margin-right: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  transition: background 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.page-2-btn:hover,
+.page-2-btn:focus-visible {
+  color: #fff;
+  background: rgba(230, 0, 77, 0.2);
+  border-color: #E6004D;
+  box-shadow: 0 0 0 2px rgba(230, 0, 77, 0.35);
+  outline: none;
+}
+@media only screen and (max-width: 480px) {
+  .page-2-btn {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    padding: 6px 16px;
+    margin-right: 8px;
+  }
+}
+.header.another-color .page-2-btn {
+  color: #202020;
+  border-color: rgba(32, 32, 32, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+}
+.header.another-color .page-2-btn:hover,
+.header.another-color .page-2-btn:focus-visible {
+  color: #fff;
+  background: #202020;
+  border-color: #202020;
+}
+
 @keyframes OpacityLinkAppear {
   0% {
     opacity: 0;
